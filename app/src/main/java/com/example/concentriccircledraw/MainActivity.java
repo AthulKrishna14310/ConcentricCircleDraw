@@ -3,6 +3,7 @@ package com.example.concentriccircledraw;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -16,10 +17,12 @@ import com.crowdfire.cfalertdialog.CFAlertDialog;
 public class MainActivity extends AppCompatActivity {
     private Button finishButton;
     private PaintView paintView;
-    private Button    refreshButton;
+    private Button refreshButton;
     private Chronometer chronometer;
     private long base;
-    private boolean start=true;
+    private boolean start = true;
+    private MediaPlayer ErrorMediaPlayer;
+    private Button TryYourselfBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,21 +30,27 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         getSupportActionBar().hide();
 
-        finishButton=(Button)findViewById(R.id.finishButton);
-        paintView=(PaintView)findViewById(R.id.paintView);
-        refreshButton=(Button)findViewById(R.id.refreshButton);
-        chronometer=(Chronometer)findViewById(R.id.chronometer);
+        ErrorMediaPlayer = MediaPlayer.create(this, R.raw.error);
+        if(ErrorMediaPlayer !=null)
+        {
+            ErrorMediaPlayer.setLooping(true);
+        }
+        finishButton = (Button) findViewById(R.id.finishButton);
+        paintView = (PaintView) findViewById(R.id.paintView);
+        refreshButton = (Button) findViewById(R.id.refreshButton);
+        chronometer = (Chronometer) findViewById(R.id.chronometer);
+        TryYourselfBtn = findViewById(R.id.main_try_yourself_btn);
 
         finishButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                if(paintView.greenEnded&&paintView.blueEnded&&paintView.magentaEnded&&paintView.yellowEnded) {
+                if (paintView.greenEnded && paintView.blueEnded && paintView.magentaEnded && paintView.yellowEnded) {
                     long time = SystemClock.elapsedRealtime() - chronometer.getBase();
                     float x = paintView.getTouched() / (time / 1000);
                     int marks = (int) x;
                     showfinalDialogue(marks, paintView);
-                }else {
+                } else {
                     CFAlertDialog.Builder builder = new CFAlertDialog.Builder(MainActivity.this)
                             .setDialogStyle(CFAlertDialog.CFAlertStyle.BOTTOM_SHEET)
                             .setTitle(("Circles are incomplete, please start and end each circle " +
@@ -58,9 +67,18 @@ public class MainActivity extends AppCompatActivity {
                     builder.show();
 
                 }
-                 }
+            }
         });
 
+        TryYourselfBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                startActivity(new Intent(MainActivity.this, TryUrSelfActivity.class));
+
+
+            }
+        });
 
         refreshButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -72,32 +90,40 @@ public class MainActivity extends AppCompatActivity {
         paintView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                if(event.getAction()==MotionEvent.ACTION_DOWN){
-                   if(start) {
-                       chronometer.setBase(SystemClock.elapsedRealtime());
-                       chronometer.start();
-                       start=false;
-                   }else{
-                       chronometer.setBase(base);
-                       chronometer.start();
-
-                   }
-
-                }
-                else if(event.getAction()==MotionEvent.ACTION_MOVE){
-                   if(paintView.isOutIndex()==true){
-                       finishButton.setText("TRACED OUT");
-                       finishButton.setBackgroundColor(Color.RED);
-                   } else{
-                       finishButton.setBackgroundColor(Color.parseColor("#D81B60"));
-                       finishButton.setText("CONTINUE");
-                   }
-                }
-                else if(event.getAction()==MotionEvent.ACTION_UP){
-                        finishButton.setText("CLICK HERE IF FINISHED");
-                        base=chronometer.getBase();
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    if (start) {
+                        chronometer.setBase(SystemClock.elapsedRealtime());
+                        chronometer.start();
+                        start = false;
+                    } else {
                         chronometer.setBase(base);
-                        chronometer.stop();
+                        chronometer.start();
+
+                    }
+
+                } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                    if (paintView.isOutIndex() == true) {
+                        if(ErrorMediaPlayer != null)
+                        {
+                            ErrorMediaPlayer.start();
+                        }
+                        finishButton.setText("TRACED OUT");
+                        finishButton.setBackgroundColor(Color.RED);
+                    } else {
+                        if(ErrorMediaPlayer != null && ErrorMediaPlayer.isPlaying())
+                        {
+                            ErrorMediaPlayer.pause();
+                        }
+                        finishButton.setBackgroundColor(Color.parseColor("#008577"));
+                        finishButton.setText("CONTINUE");
+                    }
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    ErrorMediaPlayer.pause();
+                    finishButton.setText("CLICK HERE IF FINISHED");
+                    finishButton.setBackgroundColor(Color.parseColor("#00e676"));
+                    base = chronometer.getBase();
+                    chronometer.setBase(base);
+                    chronometer.stop();
                 }
 
 
@@ -110,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void showfinalDialogue(int marks, final PaintView paintView) {
         // Create Alert using Builder
-        if(marks>=paintView.getSCORE()) {
+        if (marks >= paintView.getSCORE()) {
 
             CFAlertDialog.Builder builder = new CFAlertDialog.Builder(this)
                     .setDialogStyle(CFAlertDialog.CFAlertStyle.BOTTOM_SHEET)
@@ -118,18 +144,18 @@ public class MainActivity extends AppCompatActivity {
                             "to" +
                             " try " +
                             "concentric circles  " +
-                            "yourself . Score :: " +marks)
+                            "yourself . Score :: " + marks)
                     .setIcon(R.drawable.ic_check_circle_black_24dp)
                     .addButton("Try your self", -1, -1, CFAlertDialog.CFAlertActionStyle.POSITIVE,
                             CFAlertDialog.CFAlertActionAlignment.END, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                startActivity(new Intent(MainActivity.this,TryUrSelfActivity.class));
+                                    startActivity(new Intent(MainActivity.this, TryUrSelfActivity.class));
                                 }
                             });
 
             builder.show();
-        }else{
+        } else {
             CFAlertDialog.Builder builder = new CFAlertDialog.Builder(this)
                     .setDialogStyle(CFAlertDialog.CFAlertStyle.BOTTOM_SHEET)
                     .setTitle("Failed. Please draw the circles with minimum time and less traced out.")
@@ -147,4 +173,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(ErrorMediaPlayer !=null)
+        {
+            ErrorMediaPlayer.release();
+            ErrorMediaPlayer = null;
+        }
+    }
 }

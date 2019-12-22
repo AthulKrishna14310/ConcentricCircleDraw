@@ -6,7 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFF"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:id="@+id/root_try_yourself">
 
     <com.example.concentriccircledraw.CircleDrawLayout
         android:id="@+id/circleDrawLayout"
@@ -43,7 +44,7 @@
             android:layout_height="60dp"
             android:id="@+id/refreshButton"
             android:foreground="@drawable/ic_refresh_black_24dp"
-            android:background="@color/colorAccent"
+            android:background="@color/colorLightBlue"
             />
     </android.support.v7.widget.CardView>
     <Chronometer
